@@ -45,19 +45,27 @@
 
 <#macro printList list has_next_array>
   <#local counter=0 />
-  <#local highestIndex = list?size-1 />
-  <#t>[<#list list as item><@printListItem item?if_exists,has_next_array+[item_has_next], counter /><#if counter < highestIndex>,</#if><#local counter = counter + 1/></#list>]
+  <#local highestIndex = list?size - 1 />
+  <#t>[<#list list as item>
+  <#if !item?if_exists?is_method><#if !item?if_exists?is_hash_ex || !omit(counter?string)>
+  <@printListItem item?if_exists,has_next_array+[item_has_next], counter />
+  <#if counter < highestIndex>,</#if><#local counter = counter + 1/></#if></#if>
+  </#list>]
 </#macro>
 
 <#macro printHashEx hash has_next_array>
   <#local isFirst=true />
-  <#t>{<#list hash?keys as key><#if !isFirst>,</#if><@printItem hash[key]?if_exists,has_next_array+[key_has_next], key /><#local isFirst = false /></#list>}
+  <#t>{<#list hash?keys as key>
+  <#if !hash[key]?if_exists?is_method><#if !hash[key]?if_exists?is_hash_ex || !omit(key?string)><#if !isFirst>,</#if>
+  <@printItem hash[key]?if_exists,has_next_array+[key_has_next], key />
+  <#local isFirst = false /></#if></#if>
+  </#list>}
 </#macro>
 
 <#macro printItem item has_next_array key>
 <#if item?is_enumerable>
 <#t>"${key?js_string}":<@printList item, has_next_array />
-<#elseif item?is_hash_ex && omit(key?string)><#-- omit bean-wrapped java.lang.Class objects -->
+<#--<#elseif item?is_hash_ex && omit(key?string)><#-- omit bean-wrapped java.lang.Class objects -->-->
 <#elseif item?is_hash_ex>
 <#t>"${key?js_string}":<@printHashEx item, has_next_array />
 <#elseif item?is_number>
@@ -68,13 +76,15 @@
 <#t>"${key?js_string}":${item?string}
 <#elseif item?is_date>
 <#t>"${key?js_string}":"${item?string("yyyy-MM-dd'T'HH:mm:sszzzz")}"
+<#else>
+<#t>"${key?js_string}":"x0"
 </#if>
 </#macro>
 
 <#macro printListItem item has_next_array key>
 <#if item?is_enumerable>
 <#t><@printList item, has_next_array />
-<#elseif item?is_hash_ex && omit(key?string)><#-- omit bean-wrapped java.lang.Class objects -->
+<#--<#elseif item?is_hash_ex && omit(key?string)><#-- omit bean-wrapped java.lang.Class objects-->-->
 <#elseif item?is_hash_ex>
 <#t><@printHashEx item, has_next_array />
 <#elseif item?is_number>
@@ -85,6 +95,8 @@
 <#t>${item?string}
 <#elseif item?is_date>
 <#t>"${item?string("yyyy-MM-dd'T'HH:mm:sszzzz")}"
+<#else>
+<#t>"x1"
 </#if>
 </#macro>
 
